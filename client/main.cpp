@@ -1,14 +1,13 @@
 #include "App/App.hpp"
-#include "Log/ILog.hpp"
 #include "Log/Log.hpp"
 
 int main()
 {
     // Create logger
-    ILog* log = new Log();
+    Log log;
 
-    // Create app and pass logger to it
-    App app(log);
+    // Create app and pass pointer to logger to it
+    App app(&log);
 
     // Run app
     app.run();

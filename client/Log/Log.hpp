@@ -6,8 +6,9 @@
 class Log : public ILog
 {
 public:
-    void write(const std::string& message) override;
     ~Log() override;
+
+    void write(const std::string& message) override;
 
 private:
     std::ofstream m_file;

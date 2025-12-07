@@ -10,6 +10,6 @@ App::~App()
 
 void App::run()
 {
-    m_log->write("App is running");
-    m_log->write("App is shutting down");
+    log("App is running");
+    log("App is shutting down");
 }
