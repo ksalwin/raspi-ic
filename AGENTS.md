@@ -1,0 +1,1 @@
+- Treat typos as P1.
