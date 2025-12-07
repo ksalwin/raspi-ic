@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)
 project(client)
 
 # C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Determine if building independently or as subdirectory
@@ -25,6 +25,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_BASE_DIR}/lib)
 set(CLIENT_SOURCES
     main.cpp
     App/App.cpp
+    Log/Log.cpp
 )
 
 # Include directories
