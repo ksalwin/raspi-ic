@@ -2,6 +2,9 @@
 
 #include "IServerDiscovery.hpp"
 
+#include <optional>
+#include <string>
+
 class ServerDiscovery : public IServerDiscovery
 {
 public:
@@ -10,10 +13,7 @@ public:
     std::optional<std::string> discover() override;
 
 private:
-    // Server address to send the discovery message to
-    const std::string m_broadcast_address = "255.255.255.255";
-    // Discovery message to send to the server
-    const std::string m_discovery_message = "raspi-ic where are you?";
-    // Socket file descriptor
-    int m_socket_fd = -1;
+    const int m_broadcast_port = 4242;
+    const std::string m_discovery_message = "raspi-ic are you there?";
+    int m_socket_fd = -1; // Socket file descriptor
 };

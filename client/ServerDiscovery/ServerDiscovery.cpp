@@ -1,11 +1,22 @@
 #include "ServerDiscovery.hpp"
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+
 ServerDiscovery::ServerDiscovery()
 {
 }
 
 ServerDiscovery::~ServerDiscovery()
 {
+    if (m_socket_fd != -1)
+    {
+        close(m_socket_fd);
+        m_socket_fd = -1;
+    }
 }
 
 /*
@@ -22,8 +33,14 @@ ServerDiscovery::~ServerDiscovery()
 */
 std::optional<std::string> ServerDiscovery::discover()
 {
+    // Server address to send the discovery message to
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(m_broadcast_port);
+    addr.sin_addr.s_addr = htonl(INADDR_BROADCAST); //255.255.255.255
+
     // Create a UDP socket
-    m_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    m_socket_fd = socket(addr.sin_family, SOCK_DGRAM, IPPROTO_UDP);
     if (m_socket_fd == -1)
     {
         return std::nullopt;
@@ -31,41 +48,80 @@ std::optional<std::string> ServerDiscovery::discover()
 
     // Enable broadcast on the socket
     int broadcast_enable = 1;
-    if (setsockopt(m_socket_fd, SOL_SOCKET, SO_BROADCAST, &broadcast_enable, sizeof(broadcast_enable)) == -1)
+
+    const int rc1 = setsockopt(
+        m_socket_fd,
+        SOL_SOCKET,
+        SO_BROADCAST,
+        &broadcast_enable,
+        sizeof(broadcast_enable));
+
+    if (rc1 == -1)
     {
         close(m_socket_fd);
+        m_socket_fd = -1;
         return std::nullopt;
     }
 
     // Send a discovery message to the broadcast address (e.g. 255.255.255.255:PORT)
-    if (sendto(m_socket_fd, m_discovery_message.c_str(), m_discovery_message.size(), 0, (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr)) == -1)
-    {
+    const ssize_t sent = sendto(
+        m_socket_fd,
+        m_discovery_message.data(),
+        m_discovery_message.size(),
+        0,
+        reinterpret_cast<const sockaddr*>(&addr),
+        sizeof(addr)
+    );
+
+    if (sent == -1) {
         close(m_socket_fd);
+        m_socket_fd = -1;
         return std::nullopt;
     }
 
     // Wait for a response from the server (with timeout)
-    struct timeval timeout;
+    timeval timeout{};
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
-    if (setsockopt(m_socket_fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1)
-    {
+
+    const int rc2 = setsockopt(
+        m_socket_fd,
+        SOL_SOCKET,
+        SO_RCVTIMEO,
+        &timeout,
+        sizeof(timeout)
+    );
+    
+    if (rc2 == -1) {
         close(m_socket_fd);
+        m_socket_fd = -1;
         return std::nullopt;
     }
     
     // Receive a response from the server
+    sockaddr_in sender{};
+    socklen_t sender_len = sizeof(sender);
     char buffer[1024];
-    socklen_t addr_len = sizeof(m_broadcast_addr);
-    if (recvfrom(m_socket_fd, buffer, sizeof(buffer), 0, (struct sockaddr*)&m_broadcast_addr, &addr_len) == -1)
+
+    const ssize_t n = recvfrom(
+        m_socket_fd,
+        buffer,
+        sizeof(buffer),
+        0,
+        reinterpret_cast<sockaddr*>(&sender),
+        &sender_len);
+
+    if (n == -1)
     {
         close(m_socket_fd);
+        m_socket_fd = -1;
         return std::nullopt;
     }
 
     // Close the socket
     close(m_socket_fd);
+    m_socket_fd = -1;
 
-    // Return the server address
-    return std::string(buffer);
+    // Null terminate the buffer and return the server address
+    return std::string(buffer, static_cast<size_t>(n));
 }

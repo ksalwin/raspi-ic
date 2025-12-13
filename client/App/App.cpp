@@ -1,5 +1,7 @@
 #include "App.hpp"
 
+#include "ServerDiscovery/ServerDiscovery.hpp"
+
 App::App(ILog* log) : m_log(log)
 {
 }
