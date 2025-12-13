@@ -26,6 +26,7 @@ set(CLIENT_SOURCES
     main.cpp
     App/App.cpp
     Log/Log.cpp
+    ServerDiscovery/ServerDiscovery.cpp
 )
 
 # Include directories
