@@ -1,7 +1,18 @@
 #include "Log.hpp"
 #include <chrono>
 #include <format>
+#include <iostream>
 #include <string>
+
+/*
+ * Constructor
+ * @param write_to_console Whether to write to console.
+ * @param write_to_file Whether to write to file.
+ */
+Log::Log(bool write_to_console, bool write_to_file)
+    : m_write_to_console(write_to_console), m_write_to_file(write_to_file)
+{
+}
 
 /*
  * Destructor
@@ -29,15 +40,35 @@ void Log::write(const std::string& message)
     std::string timestamp_str = std::format("{:%Y-%m-%d_%H:%M:%S}",
         std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()));
 
-    if (!m_file.is_open())
-    {
-        // Open file with timestamp in name
-        m_file.open(timestamp_str + ".log");
-    }
+    // Create log message with timestamp
+    std::string log_message = '[' + timestamp_str + "] " + message;
 
+    // Write to console and file if enabled
+    if (m_write_to_console)
+    {
+        write_to_console(log_message);
+    }
+    if (m_write_to_file)
+    {
+        if (!m_file.is_open())
+        {
+            // Open file with timestamp in name
+            m_file.open(timestamp_str + ".log");
+        }
+
+        write_to_file(log_message);
+    }
+}
+
+void Log::write_to_console(const std::string& log_message)
+{
+    std::cout << log_message << std::endl;
+}
+
+void Log::write_to_file(const std::string& log_message)
+{
     if (m_file.is_open())
     {
-        m_file  << '[' << timestamp_str << "] "
-                << message << std::endl;
+        m_file << log_message << std::endl;
     }
 }
