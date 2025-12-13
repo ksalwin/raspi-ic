@@ -4,7 +4,7 @@
 int main()
 {
     // Create logger
-    Log log;
+    Log log(true, true);
 
     // Create app and pass pointer to logger to it
     App app(&log);
